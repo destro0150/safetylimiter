@@ -1,1 +1,1 @@
-{"enabled": true, "limit": 80, "brakeTo": 75, "brakeForce": 0.35}
+{"enabled": false, "limit": 80, "brakeTo": 75, "brakeForce": 0.35}
