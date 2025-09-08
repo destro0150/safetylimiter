@@ -4,48 +4,63 @@
 --  • Prox-assist no depende de ReleaseTo.
 --  • thrOut arranca neutro y se clampa <= gas del piloto.
 
-SL_ENABLED    = $($state.enabled.ToString().ToLower())
+----------------------------------------------------------------
+-- Safety Limiter — Proximity assist + (opcional) pace limiter
+-- Encabezado compatible con CSP Online scripts (Lua puro).
+----------------------------------------------------------------
+local S = ac.getScriptSettings and ac.getScriptSettings() or {}
+local function tobool(v)
+  if v == nil then return false end
+  if type(v) == 'number' then return v ~= 0 end
+  v = tostring(v):lower()
+  return v == '1' or v == 'true' or v == 'yes' or v == 'on'
+end
+
+-- ON/OFF
+SL_ENABLED    = tobool(S.SL_ENABLED) or true
 
 -- Pace (opcional)
-SL_PACE       = $($state.pace)
-SL_RELEASETO  = $($state.to)
-SL_BRAKE      = $(([string]::Format([Globalization.CultureInfo]::InvariantCulture, "{0:0.###}", $state.brake)))
+SL_PACE       = tonumber(S.SL_PACE) or 0
+SL_RELEASETO  = tonumber(S.SL_RELEASETO) or 0
+SL_BRAKE      = tonumber(S.SL_BRAKE) or 0.5
 
 -- HUD
-SL_HUD        = $($state.hud.ToString().ToLower())
-SL_HUD_X      = $($state.hudx)
-SL_HUD_Y      = $($state.hudy)
-SL_HUD_W      = $($state.hudw)
-SL_HUD_H      = $($state.hudh)
-SL_HUD_FS     = $($state.hudfs)   -- 0=Normal, 1=Grande, 2=Title
+SL_HUD        = tobool(S.SL_HUD)
+SL_HUD_X      = tonumber(S.SL_HUD_X) or 30
+SL_HUD_Y      = tonumber(S.SL_HUD_Y) or 120
+SL_HUD_W      = tonumber(S.SL_HUD_W) or 420
+SL_HUD_H      = tonumber(S.SL_HUD_H) or 90
+SL_HUD_FS     = tonumber(S.SL_HUD_FS) or 0   -- 0=Normal, 1=Grande, 2=Title
 
 -- Suavidad general
-SL_ASSIST     = $($state.assist.ToString().ToLower())
-SL_KT         = $(([string]::Format([Globalization.CultureInfo]::InvariantCulture, "{0:0.###}", $state.kt)))
-SL_KA         = $(([string]::Format([Globalization.CultureInfo]::InvariantCulture, "{0:0.###}", $state.ka)))
-SL_TAU_THR    = $(([string]::Format([Globalization.CultureInfo]::InvariantCulture, "{0:0.###}", $state.tauThr)))
-SL_TAU_BRK    = $(([string]::Format([Globalization.CultureInfo]::InvariantCulture, "{0:0.###}", $state.tauBrk)))
-SL_TAU_V      = $(([string]::Format([Globalization.CultureInfo]::InvariantCulture, "{0:0.###}", $state.tauV)))
-SL_HYST       = $(([string]::Format([Globalization.CultureInfo]::InvariantCulture, "{0:0.###}", $state.hyst)))
-SL_FULL_D     = $(([string]::Format([Globalization.CultureInfo]::InvariantCulture, "{0:0.###}", $state.fullD)))
-SL_SOFTEN     = $(([string]::Format([Globalization.CultureInfo]::InvariantCulture, "{0:0.###}", $state.soften)))
+SL_ASSIST     = tobool(S.SL_ASSIST)
+SL_KT         = tonumber(S.SL_KT) or 0.09
+SL_KA         = tonumber(S.SL_KA) or 0.00
+SL_TAU_THR    = tonumber(S.SL_TAU_THR) or 0.12
+SL_TAU_BRK    = tonumber(S.SL_TAU_BRK) or 0.20
+SL_TAU_V      = tonumber(S.SL_TAU_V) or 0.12
+SL_HYST       = tonumber(S.SL_HYST) or 1.0
+SL_FULL_D     = tonumber(S.SL_FULL_D) or 12.0
+SL_SOFTEN     = tonumber(S.SL_SOFTEN) or 0.5
 
 -- Proximidad
-SL_PROX       = $($state.prox.ToString().ToLower())
-SL_PROX_RANGE = $(([string]::Format([Globalization.CultureInfo]::InvariantCulture, "{0:0.###}", $state.proxRange)))
-SL_PROX_SIDE  = $(([string]::Format([Globalization.CultureInfo]::InvariantCulture, "{0:0.###}", $state.proxSide)))
-SL_PROX_BACK  = $(([string]::Format([Globalization.CultureInfo]::InvariantCulture, "{0:0.###}", $state.proxBack)))
-SL_PROX_WARN  = $(([string]::Format([Globalization.CultureInfo]::InvariantCulture, "{0:0.###}", $state.proxWarn)))
+SL_PROX       = tobool(S.SL_PROX)
+SL_PROX_RANGE = tonumber(S.SL_PROX_RANGE) or 40.0
+SL_PROX_SIDE  = tonumber(S.SL_PROX_SIDE)  or 4.0
+SL_PROX_BACK  = tonumber(S.SL_PROX_BACK)  or 25.0
+SL_PROX_WARN  = tonumber(S.SL_PROX_WARN)  or 16.0
 
 -- Prox assist
-SL_PROX_ASSIST= $($state.proxAssist.ToString().ToLower())
-SL_PROX_GAIN  = $(([string]::Format([Globalization.CultureInfo]::InvariantCulture, "{0:0.###}", $state.proxGain)))
-SL_PROX_MAX   = $(([string]::Format([Globalization.CultureInfo]::InvariantCulture, "{0:0.###}", $state.proxMax)))
-SL_PROX_MIN   = $(([string]::Format([Globalization.CultureInfo]::InvariantCulture, "{0:0.###}", $state.proxMin)))
-SL_PROX_DVREF = $(([string]::Format([Globalization.CultureInfo]::InvariantCulture, "{0:0.###}", $state.proxDvRef)))
--- ===== Defaults por si no vienen desde $state =====
-SL_PROX_TTC = SL_PROX_TTC or 1.20     -- s: umbral de tiempo a colisión
-SL_REAR_CAP = SL_REAR_CAP or 0.35     -- tope de freno si te cierran por atrás
+SL_PROX_ASSIST= tobool(S.SL_PROX_ASSIST)
+SL_PROX_GAIN  = tonumber(S.SL_PROX_GAIN)  or 1.0
+SL_PROX_MAX   = tonumber(S.SL_PROX_MAX)   or 0.80
+SL_PROX_MIN   = tonumber(S.SL_PROX_MIN)   or 0.10
+SL_PROX_DVREF = tonumber(S.SL_PROX_DVREF) or 25.0
+-- Extras proximity (TTC/trasera)
+SL_PROX_TTC   = tonumber(S.SL_PROX_TTC)   or 1.20    -- s
+SL_REAR_CAP   = tonumber(S.SL_REAR_CAP)   or 0.35    -- tope freno si te cierran
+----------------------------------------------------------------
+
 SL_PROX_WARN = SL_PROX_WARN or 12.0   -- m: distancia “peligro” (fallback)
 SL_PROX_DVREF = SL_PROX_DVREF or 25.0 -- km/h: Δv de referencia
 
