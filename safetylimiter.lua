@@ -145,15 +145,23 @@ function script.update(dt)
 end
 
 -- (opcional) dibujar una lucecita discreta para debug
+-- HUD opcional y compatible con builds sin ui.measureDpi
 function script.drawUI()
-  local w = ui.measureDpi(140, 38)
-  ui.pushDWriteFont('Segoe UI')
-  ui.beginTransparentWindow('proxSafetyHUD', vec2(30, 120), w, true)
-  ui.pushStyleVar(ui.StyleVar.Alpha, 0.85)
-  ui.text('ProxSafety')
-  ui.sameLine(0, 8)
-  ui.text(string.format('brk: %.2f', lastBrakeReq))
-  ui.popStyleVar()
-  ui.endTransparentWindow()
-  ui.popDWriteFont()
+  local showHUD = tonumber(S and S.HUD) or 1
+  if showHUD == 0 then return end
+  if not ui then return end
+
+  local beginWin = ui.beginTransparentWindow or ui.beginWindow
+  local endWin   = ui.endTransparentWindow   or ui.endWindow
+  if not (beginWin and endWin) then return end
+
+  if ui.pushDWriteFont then ui.pushDWriteFont('Segoe UI') end
+  -- tamaño fijo: evitamos ui.measureDpi
+  beginWin('proxSafetyHUD', vec2(30, 120), vec2(160, 42), true)
+    if ui.pushStyleVar and ui.StyleVar then ui.pushStyleVar(ui.StyleVar.Alpha, 0.85) end
+    ui.text(('ProxSafety  brk: %.2f'):format(lastBrakeReq or 0))
+    if ui.popStyleVar then ui.popStyleVar() end
+  endWin()
+  if ui.popDWriteFont then ui.popDWriteFont() end
 end
+
