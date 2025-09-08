@@ -1,8 +1,4 @@
--- SafetyLimiter_HTTP.lua — control por JSON remoto
-local opts = ac.INIConfig.onlineExtras():mapSection('SC_HTTP', {
-  CONFIG_URL = 'https://raw.githubusercontent.com/destro0150/safetylimiter/refs/heads/main/sc.json',
-  POLL_MS    = 1000,
-})
+local opts = { CONFIG_URL = "https://TU-RAW/sc.json", POLL_MS = 1000 }
 
 local okWeb,  web  = pcall(require, 'web');  if not okWeb  then okWeb,  web  = pcall(require, 'lib_web')  end
 local okJson, json = pcall(require, 'json'); if not okJson then okJson, json = pcall(require, 'lib_jsonparse') end
